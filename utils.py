@@ -74,6 +74,14 @@ def AR_calc(dataset, column, period=12, start = 0, end = -1):
     print(f'AR coefficients a: {a}, b: {b}')
     return {'a': a, 'b': b}
 
+def shape_of_df(entity, info_label, start, end):
+    if type(entity.df_reserv)==pd.DataFrame:
+        entity.df = entity.df_reserv.copy()
+    else:
+        entity.df_reserv = entity.df.copy()
+    entity.df = entity.df_reserv.copy().iloc[start:end:]
+    print(entity.df)
+    entity.set_cache(entity.cache, info_label=info_label)
 def SMA(t=None, start=None, end=None, n=None, dataset=pd.DataFrame):
     """
     n: number of observed values for calculating SMA
@@ -88,6 +96,7 @@ def SMA_calc(entity, n, info_label, not_trend = False):
     ----
     v2 версия (В будущем)
     SMA для изначального ряда будет вычисляться  как SMA для остатка + trend
+    Потому что SMA мещается относительно абсциссы, но не тренда, то печально
     ----
     """
     if not_trend:

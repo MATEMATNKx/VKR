@@ -6,7 +6,7 @@ from tkinter import filedialog
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
-from utils import modern, line_trend, correlation, line_trend_minus, SMA_calc
+from utils import modern, line_trend, correlation, line_trend_minus, SMA_calc, shape_of_df
 import json
 
 class Example(Frame):
@@ -26,6 +26,7 @@ class Example(Frame):
         self.trend_values = None
         self.ts_not_trend_df = None
         self.SMA_list = []
+        self.df_reserv = None #Запоминаем датасет
     def centerWindow(self):
         w = 1000
         h = 800
@@ -81,14 +82,22 @@ class Example(Frame):
                             command= lambda: SMA_calc(entity=self, n=int(n_SMA.get()), info_label=info_label))
         button_sma.grid(row=3, column=2)
         button_sma_ost = Button(self, text="Построить SMA для остатка",
-                            command=lambda: SMA_calc(entity=self, n=int(n_SMA.get()), info_label=info_label, not_trend=True))
+                            command=lambda: SMA_calc(entity=self, n=int(n_SMA.get()),
+                                                     info_label=info_label, not_trend=True))
         button_sma_ost.grid(row=4, column=2)
 
         n_SMA_label = Label(self, text="Количество периодов для построения SMA")
         n_SMA_label.grid(row=5, column=2)
         n_SMA = Entry(self)
         n_SMA.grid(row=6, column=2)
-
+        button_shape_of_df = Button(self, text='Рассмотреть промежуток временного ряда',
+                                    command=lambda : shape_of_df(self, start=int(shape_from.get()),
+                                                                 end=int(shape_to.get()), info_label=info_label))
+        button_shape_of_df.grid(row=7, column=2)
+        shape_from = Entry(self)
+        shape_from.grid(row=8, column=2)
+        shape_to = Entry(self)
+        shape_to.grid(row=9, column=2)
 
 
     def choose_file(self, event=None):

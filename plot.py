@@ -16,7 +16,7 @@ def plot(root, dataset=None):
     plot1 = fig.add_subplot(111)
 
     # plotting the graph
-    if type(dataset)==None:
+    if type(dataset)!=pd.DataFrame:
         plot1.plot(y)
     else:
         plot1.plot(dataset, label="Изначальный временной ряд")
