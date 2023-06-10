@@ -54,3 +54,18 @@ def SMA(t=None, start=None, end=None, n=None, dataset=pd.DataFrame):
     :return:
     """
     return 1 / n * np.sum(dataset[end-n:end:])
+
+def correlation(dataset: pd.DataFrame, k=[], column='id', state_size=True):
+    '''
+    dataset: pd.DataFrame - ожидается датасет типа pd.DataFrame
+    k1 - лаги которые необходимо посчитать
+    column - колонка которую необходимо считать
+    state_size = [True, False] - фиксировать размер колонки. Так как при смещении
+    временных данных у нас будет уменьшаться размер выборки. Размер колонки фиксируется по последнему смещению
+    '''
+    df = dataset.copy()
+    for i in k:
+        df[f'{column}-{i}'] = df[column].shift(periods=i)
+    if state_size:
+        df.dropna(inplace=True)
+    return df.corr().iloc[0,::].tolist()

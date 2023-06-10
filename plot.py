@@ -2,20 +2,28 @@ from matplotlib.figure import Figure
 from tkinter.ttk import Frame
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,
 NavigationToolbar2Tk)
+import pandas as pd
 
-def plot(root):
+def plot(root, dataset):
     # the figure that will contain the plot
-    fig = Figure(figsize=(5, 5),
+    fig = Figure(figsize=(10, 5),
                  dpi=100)
 
     # list of squares
-    y = [i ** 2 for i in range(101)]
+    y = [i ** 32 for i in range(101)]
 
     # adding the subplot
     plot1 = fig.add_subplot(111)
 
     # plotting the graph
-    plot1.plot(y)
+    plot1.plot(dataset)
+    '''
+    print(type(dataset))
+    if type(dataset) == "<class 'pandas.core.frame.DataFrame'>":
+        plot1.plot(dataset)
+    else:
+        plot1.plot(y)
+    '''
     plot1.grid()
 
     # creating the Tkinter canvas
