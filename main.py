@@ -1,10 +1,13 @@
 from tkinter import Tk, BOTH
-from tkinter.ttk import Frame, Button, Style
+from tkinter.ttk import Frame, Button, Style, Label, Entry
+from tkinter import Text,  NSEW
 from plot import plot
 from tkinter import filedialog
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
+from utils import modern, line_trend, correlation, line_trend_minus
+import json
 
 class Example(Frame):
 
@@ -14,10 +17,15 @@ class Example(Frame):
         self.parent.title("Визуализатор")
         self.pack(fill=BOTH, expand=1)
         self.centerWindow()
-
+        self.modern_status = False
+        self.df = None
+        self.cache = {}
+        self.trend=False
+        self.trend_settings = []
+        self.ts_not_trend = False
     def centerWindow(self):
-        w = 500
-        h = 300
+        w = 1000
+        h = 800
 
         sw = self.parent.winfo_screenwidth()
         sh = self.parent.winfo_screenheight()
@@ -25,19 +33,73 @@ class Example(Frame):
         x = (sw - w) / 2
         y = (sh - h) / 2
         self.parent.geometry('%dx%d+%d+%d' % (w, h, x, y))
-        #plot(self, dataset=None)
-        quitButton = Button(self, text="Закрыть окно", command=self.quit)
-        choose_csv = Button(self, text="Выбрать файл", command=self.choose_file)
-        choose_csv.grid(row=2, column=0)
-        #quitButton.grid(row=2, column=0)
+        choose_csv_button = Button(self, text="Выбрать файл", command=self.choose_file)
+        choose_csv_button.grid(row=2, column=0)
+
+        modern_ts_button = Button(self, text="Преобразовать временной ряд", command=lambda: modern(entity=self))
+        modern_ts_button.grid(row=3, column=0)
+
+        trend_ts_button = Button(self, text='Построить линейный тренд',
+                                 command=lambda:
+                                 line_trend(entity=self, label=info_label, start=int(trend_from.get()), end=int(trend_to.get())))
+        trend_ts_button.grid(row=4, column=0)
+
+
+
+        trend_from = Entry(self)
+        trend_from.grid(row=6, column=0)
+        trend_to = Entry(self)
+        trend_to.grid(row=7, column=0)
+
+        label_trend = Label(self, text="промежуток вычисления тренда по примеру [от:до]\n[0:-1] - на всём промежутке")
+        label_trend.grid(row=5,column=0)
+
+
+
+        trend_ts_minus_button = Button(self, text='Построить временной ряд без тренда',
+                                       command=lambda: line_trend_minus(entity=self, info_label=info_label,
+                                                                        btn=trend_ts_minus_button))
+        trend_ts_minus_button.grid(row=8, column=0)
+
+
+
+        info_label = Label(self, text=f"Информация о временном ряде:")
+        info_label.grid(row=1, column=3)
+
+        corr_to = Entry(self)
+        corr_to.grid(row=1, column=2)
+        button_corr = Button(self, text="Вычислить корреляцию для k",
+                             command=lambda: correlation(entity=self,k=[i for i in range(1, int(corr_to.get())+1)],
+                                                 state_size=True,label=info_label))
+        button_corr.grid(row=2, column=2, sticky="W")
+
+
+
+
     def choose_file(self, event=None):
         filename = filedialog.askopenfilename()
         if filename.endswith('csv'):
             self.parent.title(os.path.split(filename)[1])
-            df = pd.read_csv(filename)
-            plot(self, dataset=df)
-            #self.update()
-        print('Selected:', df)
+            self.df = pd.read_csv(filename)
+            plot(self, dataset=self.df)
+    def set_df(self, df):
+        if self.modern_status != True:
+            self.df = df
+            plot(self, dataset=self.df)
+            self.update()
+            self.modern_status = True
+        else:
+            pass
+    def set_cache(self, cache, info_label):
+        self.cache = cache
+        if self.cache['tr_a'] and self.cache['tr_b']:
+            self.trend = True
+        info_label['text'] = "Информация о временном ряде:\n" + str(json.dumps(self.cache, default=lambda o: o.__dict__, indent=4))
+        plot(self, dataset=self.df)
+        self.update()
+        print(self.cache)
+
+
 def main():
     root = Tk()
     ex = Example(root)

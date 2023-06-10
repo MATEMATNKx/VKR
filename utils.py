@@ -1,15 +1,30 @@
 import numpy as np
 import pandas as pd
+from plot import plot
+
+def modern(entity):
+    dataset = entity.df.copy()
+    S = 1 * dataset.iloc[0, 0] / 100
+    S_ = [S]
+    for i in range(1, dataset.shape[0]):
+        S_.append(S_[i - 1] * dataset.iloc[i, 0] / 100)
+    entity.set_df(pd.DataFrame(S_, columns=dataset.columns))
+    #print(pd.Series(S_)
 
 
-def line_trend(dataset, name , i, start = 0, end = -1):
+
+def line_trend(entity, dataset=None, name=0 , i=0, start = 0, end = -1, label = None):
     """
     i - по какому столбцу вычислить тренд. Индекс от 0 (счет колонок идёт с нуля)
     dataset - набор данных
     n - количество показателей, на которых будет происходить вычисление МНК
     start, end - начало и конец включительно, номер месяца как m*k, где m - месяц года, k-год
     """
-    df = dataset.copy()
+    if dataset ==None:
+        df = entity.df.copy()
+    else:
+        df = dataset.copy()
+
     if end == -1:
         df_new = df.iloc[start::]
     else:
@@ -22,9 +37,20 @@ def line_trend(dataset, name , i, start = 0, end = -1):
     b = (y.sum() - a*X.sum())/n
     print(f'trend coefficients a: {a}, b: {b}')
     #
-
-    return {'a': a, 'b': b}
-
+    cache = entity.cache.copy()
+    cache['tr_a'] = a
+    cache['tr_b'] = b
+    entity.set_cache(cache=cache, info_label=label)
+    entity.trend=True
+    #return {'a': a, 'b': b}
+def line_trend_minus(entity, info_label, btn):
+    if entity.ts_not_trend:
+        entity.ts_not_trend = False
+        btn['text'] = "Построить остаток временного ряда"
+    else:
+        entity.ts_not_trend = True
+        btn['text'] = "Убрать остаток временного ряда"
+    entity.set_cache(entity.cache, info_label=info_label)
 def AR_calc(dataset, column, period=12, start = 0, end = -1):
     """
     dataset - набор данных
@@ -55,7 +81,7 @@ def SMA(t=None, start=None, end=None, n=None, dataset=pd.DataFrame):
     """
     return 1 / n * np.sum(dataset[end-n:end:])
 
-def correlation(dataset: pd.DataFrame, k=[], column='id', state_size=True):
+def correlation(entity, k=[], column=None, state_size=True, label = None):
     '''
     dataset: pd.DataFrame - ожидается датасет типа pd.DataFrame
     k1 - лаги которые необходимо посчитать
@@ -63,9 +89,19 @@ def correlation(dataset: pd.DataFrame, k=[], column='id', state_size=True):
     state_size = [True, False] - фиксировать размер колонки. Так как при смещении
     временных данных у нас будет уменьшаться размер выборки. Размер колонки фиксируется по последнему смещению
     '''
-    df = dataset.copy()
+    df = entity.df.copy()
+    if column ==None:
+        column=df.columns.tolist()[0]
     for i in k:
         df[f'{column}-{i}'] = df[column].shift(periods=i)
     if state_size:
         df.dropna(inplace=True)
-    return df.corr().iloc[0,::].tolist()
+
+    cache = entity.cache.copy()
+    correl_vac = {}
+    _ = df.corr().iloc[0,::].tolist()
+    for i in range(1, len(_)):
+        correl_vac[f'k_{i}'] = _[i]
+    cache["correlation_info"] = correl_vac
+    cache["best_correlation"] = list(correl_vac.keys())[list(correl_vac.values()).index(max(_[1::]))]
+    entity.set_cache(cache=cache, info_label=label)

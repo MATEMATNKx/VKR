@@ -3,7 +3,7 @@ from tkinter.ttk import Frame
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,
 NavigationToolbar2Tk)
 import pandas as pd
-
+import numpy as np
 def plot(root, dataset):
     # the figure that will contain the plot
     fig = Figure(figsize=(10, 5),
@@ -16,16 +16,23 @@ def plot(root, dataset):
     plot1 = fig.add_subplot(111)
 
     # plotting the graph
-    plot1.plot(dataset)
-    '''
-    print(type(dataset))
-    if type(dataset) == "<class 'pandas.core.frame.DataFrame'>":
-        plot1.plot(dataset)
-    else:
-        plot1.plot(y)
-    '''
-    plot1.grid()
+    plot1.plot(dataset, label="Изначальный временной ряд")
+    plot1.set_title(dataset.columns.tolist()[0])
+    plot1.set_xlabel("Временной интервал")
+    print(dataset.columns)
 
+    if root.trend:
+        trend = root.cache["tr_a"] * np.arange(dataset.shape[0]) + root.cache['tr_b']
+        plot1.plot(np.arange(dataset.shape[0]), trend, label="Тренд временного ряда")
+
+    print(root.ts_not_trend)
+    if root.ts_not_trend:
+        plot1.plot(np.arange(dataset.shape[0]), [dataset.values[i] - trend[i] for i in range(dataset.shape[0])],
+                   label="Остаток временного ряда")
+
+    plot1.legend()
+
+    plot1.grid()
     # creating the Tkinter canvas
     # containing the Matplotlib figure
     canvas = FigureCanvasTkAgg(fig,
