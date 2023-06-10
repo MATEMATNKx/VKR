@@ -6,7 +6,7 @@ from tkinter import filedialog
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
-from utils import modern, line_trend, correlation, line_trend_minus
+from utils import modern, line_trend, correlation, line_trend_minus, SMA_calc
 import json
 
 class Example(Frame):
@@ -18,11 +18,14 @@ class Example(Frame):
         self.pack(fill=BOTH, expand=1)
         self.centerWindow()
         self.modern_status = False
-        self.df = None
         self.cache = {}
-        self.trend=False
+        self.trend = False
         self.trend_settings = []
         self.ts_not_trend = False
+        self.SMA = False
+        self.trend_values = None
+        self.ts_not_trend_df = None
+        self.SMA_list = []
     def centerWindow(self):
         w = 1000
         h = 800
@@ -33,6 +36,7 @@ class Example(Frame):
         x = (sw - w) / 2
         y = (sh - h) / 2
         self.parent.geometry('%dx%d+%d+%d' % (w, h, x, y))
+
         choose_csv_button = Button(self, text="Выбрать файл", command=self.choose_file)
         choose_csv_button.grid(row=2, column=0)
 
@@ -51,7 +55,7 @@ class Example(Frame):
         trend_to = Entry(self)
         trend_to.grid(row=7, column=0)
 
-        label_trend = Label(self, text="промежуток вычисления тренда по примеру [от:до]\n[0:-1] - на всём промежутке")
+        label_trend = Label(self, text="Промежуток вычисления тренда по примеру [от:до]\n[0:-1] - на всём промежутке")
         label_trend.grid(row=5,column=0)
 
 
@@ -71,8 +75,19 @@ class Example(Frame):
         button_corr = Button(self, text="Вычислить корреляцию для k",
                              command=lambda: correlation(entity=self,k=[i for i in range(1, int(corr_to.get())+1)],
                                                  state_size=True,label=info_label))
-        button_corr.grid(row=2, column=2, sticky="W")
+        button_corr.grid(row=2, column=2)
 
+        button_sma = Button(self, text= "Построить SMA для изначального ряда",
+                            command= lambda: SMA_calc(entity=self, n=int(n_SMA.get()), info_label=info_label))
+        button_sma.grid(row=3, column=2)
+        button_sma_ost = Button(self, text="Построить SMA для остатка",
+                            command=lambda: SMA_calc(entity=self, n=int(n_SMA.get()), info_label=info_label, not_trend=True))
+        button_sma_ost.grid(row=4, column=2)
+
+        n_SMA_label = Label(self, text="Количество периодов для построения SMA")
+        n_SMA_label.grid(row=5, column=2)
+        n_SMA = Entry(self)
+        n_SMA.grid(row=6, column=2)
 
 
 

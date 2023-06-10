@@ -79,7 +79,32 @@ def SMA(t=None, start=None, end=None, n=None, dataset=pd.DataFrame):
     n: number of observed values for calculating SMA
     :return:
     """
-    return 1 / n * np.sum(dataset[end-n:end:])
+    return 1 / n * np.sum(dataset.values[t-n:t:])
+
+def SMA_calc(entity, n, info_label, not_trend = False):
+    """
+    not_trend = True - взять датасет без тренда и построить на нём SMA
+    Аналогично и на оборот
+    ----
+    v2 версия (В будущем)
+    SMA для изначального ряда будет вычисляться  как SMA для остатка + trend
+    ----
+    """
+    if not_trend:
+        df = entity.ts_not_trend_df.copy()
+    else:
+        df = entity.df.copy()
+    sma_list = []
+    if entity.SMA:
+        entity.SMA = False
+    else:
+        entity.SMA = True
+    for i in range(n, df.shape[0]):
+        sma_list.append(SMA(t=i, n=n, dataset=df))
+    entity.SMA_list = sma_list
+    cache = entity.cache.copy()
+    cache["sma_n"] = int(n)
+    entity.set_cache(cache, info_label=info_label)
 
 def correlation(entity, k=[], column=None, state_size=True, label = None):
     '''
