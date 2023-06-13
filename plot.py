@@ -15,12 +15,21 @@ def plot(root, dataset=None):
     # adding the subplot
     plot1 = fig.add_subplot(111)
 
+    l = []
+    for i in range(2010, 2023):
+        for j in range(12):
+            if j % 12 == 0:
+                l.append('   '+str(i))
+            else:
+                l.append('')
+    print(l)
+
     # plotting the graph
     if type(dataset)!=pd.DataFrame:
         plot1.plot(y)
     else:
         plot1.plot(np.arange(dataset.shape[0]), dataset.values, label="Изначальный временной ряд")
-
+        #plot1.set_xticks(np.arange(0,dataset.shape[0],12), l[::12])
     plot1.set_title(dataset.columns.tolist()[0])
     plot1.set_xlabel("Временной интервал")
 
