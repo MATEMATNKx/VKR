@@ -19,27 +19,48 @@ def plot(root, dataset=None):
     if type(dataset)!=pd.DataFrame:
         plot1.plot(y)
     else:
-        plot1.plot(dataset, label="Изначальный временной ряд")
+        plot1.plot(np.arange(dataset.shape[0]), dataset.values, label="Изначальный временной ряд")
 
     plot1.set_title(dataset.columns.tolist()[0])
     plot1.set_xlabel("Временной интервал")
-    print(dataset.columns)
 
     if root.trend:
         root.trend_values = pd.DataFrame(root.cache["tr_a"] * np.arange(dataset.shape[0]) + root.cache['tr_b'],
                                          columns=dataset.columns)
         plot1.plot(np.arange(dataset.shape[0]), root.trend_values.values, label="Тренд временного ряда")
-
     if root.ts_not_trend:
-        root.ts_not_trend_df = pd.DataFrame([dataset.values[i] - root.trend_values.values[i] for i in range(dataset.shape[0])],
+        root.ts_not_trend_df = pd.DataFrame([dataset.values[i].tolist()[0] - root.trend_values.values[i].tolist()[0] for i in range(dataset.shape[0])],
                                 columns = dataset.columns)
         plot1.plot(np.arange(dataset.shape[0]), root.ts_not_trend_df.values,
-                   label="Остаток временного ряда")
+                   label="Ряд остатков")
 
     if root.SMA:
         plot1.plot(np.arange(root.cache["sma_n"], dataset.shape[0]), root.SMA_list,
                    label="SMA")
+    if root.AR:
+        model = pd.DataFrame(
+            root.cache["AR_a"] * root.ts_not_trend_df[
+                                 root.cache["AR_start"] + root.cache["AR_period"]:root.cache["AR_end"]].values +
+            root.cache["AR_b"],
+            columns=dataset.columns)
 
+        model_tr = model.values.ravel() + root.cache["tr_a"] * np.arange(
+            root.cache["AR_start"] + root.cache["AR_period"],
+            root.cache["AR_end"]) + root.cache["tr_b"]
+
+        plot1.plot(np.arange(root.cache["AR_start"] + root.cache["AR_period"],
+                             root.cache["AR_end"]),
+                   model_tr, label='Моделируемые значения')
+
+        forecast = root.cache["AR_a"] * model.values.ravel()+\
+                   root.cache["AR_b"] + \
+                   root.cache['tr_a'] * np.arange(root.cache["AR_start"]+root.cache["AR_period"]+\
+                                                  root.cache["AR_period"],
+                                                  root.cache["AR_end"] + root.cache["AR_period"]) +root.cache['tr_b']
+        plot1.plot(np.arange(root.cache["AR_start"]+root.cache["AR_period"]+\
+                                                  root.cache["AR_period"],
+                                                  root.cache["AR_end"] + root.cache["AR_period"]),
+                   forecast, label="Предсказанные значения")
 
     plot1.legend()
 

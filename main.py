@@ -6,7 +6,7 @@ from tkinter import filedialog
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
-from utils import modern, line_trend, correlation, line_trend_minus, SMA_calc, shape_of_df
+from utils import modern, line_trend, correlation, line_trend_minus, SMA_calc, shape_of_df, AR_calc
 import json
 
 class Example(Frame):
@@ -27,6 +27,7 @@ class Example(Frame):
         self.ts_not_trend_df = None
         self.SMA_list = []
         self.df_reserv = None #Запоминаем датасет
+        self.AR = False
     def centerWindow(self):
         w = 1000
         h = 800
@@ -98,6 +99,24 @@ class Example(Frame):
         shape_from.grid(row=8, column=2)
         shape_to = Entry(self)
         shape_to.grid(row=9, column=2)
+
+        AR_period_label = Label(self, text="Количество периодов для построения AR")
+        AR_period_label.grid(row=2,column=3)
+        AR_period = Entry(self)
+        AR_period.grid(row=4, column=3)
+        AR_period_label = Label(self, text="Промежуток построения и прогноза модели AR")
+        AR_period_label.grid(row=5, column=3)
+        AR_start = Entry(self)
+        AR_start.grid(row=6, column=3)
+        AR_end = Entry(self)
+        AR_end.grid(row=7, column=3)
+        button_AR = Button(self, text="Построить AR",
+                            command=lambda: AR_calc(entity=self,
+                                                    period=int(AR_period.get()),
+                                                    start=int(AR_start.get()),
+                                                    end=int(AR_end.get()),
+                                                    info_label=info_label))
+        button_AR.grid(row=8, column=3)
 
 
     def choose_file(self, event=None):

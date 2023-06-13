@@ -13,27 +13,25 @@ def modern(entity):
 
 
 
-def line_trend(entity, dataset=None, name=0 , i=0, start = 0, end = -1, label = None):
+def line_trend(entity, i=0, start = 0, end = -1, label = None):
     """
     i - по какому столбцу вычислить тренд. Индекс от 0 (счет колонок идёт с нуля)
     dataset - набор данных
     n - количество показателей, на которых будет происходить вычисление МНК
     start, end - начало и конец включительно, номер месяца как m*k, где m - месяц года, k-год
     """
-    if dataset ==None:
-        df = entity.df.copy()
-    else:
-        df = dataset.copy()
-
+    df = entity.df.copy()
     if end == -1:
         df_new = df.iloc[start::]
     else:
         df_new = df.iloc[start:end+1]
-    X = df_new.index.values
+    #X = df_new.index.values
+    X = np.arange(df_new.shape[0])
     y = df_new.iloc[::, i].values
+    print(X, y)
     n = df_new.shape[0]
     a = n * (np.sum(X*y)) - (X.sum()*y.sum())
-    a /= (n * np.sum(X*X) - X.sum()*X.sum())
+    a /= (n * np.sum(X*X) - np.sum(X)*np.sum(X))
     b = (y.sum() - a*X.sum())/n
     print(f'trend coefficients a: {a}, b: {b}')
     #
@@ -51,7 +49,7 @@ def line_trend_minus(entity, info_label, btn):
         entity.ts_not_trend = True
         btn['text'] = "Убрать остаток временного ряда"
     entity.set_cache(entity.cache, info_label=info_label)
-def AR_calc(dataset, column, period=12, start = 0, end = -1):
+def AR_calc(entity, info_label, period=12, start = 0, end = -1):
     """
     dataset - набор данных
     n - количество показателей, на которых будет происходить вычисление МНК
@@ -60,26 +58,41 @@ def AR_calc(dataset, column, period=12, start = 0, end = -1):
         Trend - будет вычисляться тренд
     start, end - месяц, начало и конец по которому будет моделироваться AR. И потом это разбивается на X_1, X_2
     """
-    df = dataset[f'{column}'].copy()
+    # df = dataset[f'{column}'].copy()
+    df = entity.ts_not_trend_df.copy()
     if end == -1:
         df = df.iloc[start::]
     else:
         df = df.iloc[start:end+1]
     X_1 = df.iloc[0:period].values
     X_2 = df.iloc[period:period*2].values
+    print(df.iloc[0:period], df.iloc[period:period*2])
     n = period
     a = n * (np.sum(X_1*X_2)) - (np.sum(X_1)*np.sum(X_2))
-    a /= (n * np.sum(X_1*X_1)) - (np.sum(X_1)*np.sum(X_2))
+    a /= (n * np.sum(X_1*X_1)) - (np.sum(X_1)*np.sum(X_1))
     b = (np.sum(X_2) - a*np.sum(X_1))/n
-    print(f'AR coefficients a: {a}, b: {b}')
-    return {'a': a, 'b': b}
+    #print(f'AR coefficients a: {a}, b: {b}')
+    #return {'a': a, 'b': b}
+    cache = entity.cache.copy()
+    cache['AR_a'] = a
+    cache['AR_b'] = b
+    cache['AR_start'] = start
+    cache['AR_end'] = end
+    cache['AR_period'] = period
+    entity.AR = False if entity.AR == True else True
+
+    entity.set_cache(cache, info_label=info_label)
 
 def shape_of_df(entity, info_label, start, end):
     if type(entity.df_reserv)==pd.DataFrame:
         entity.df = entity.df_reserv.copy()
     else:
         entity.df_reserv = entity.df.copy()
-    entity.df = entity.df_reserv.copy().iloc[start:end:]
+    if end!= -1:
+        entity.df = entity.df_reserv.copy().iloc[start:end + 1:]
+    else:
+        entity.df = entity.df_reserv.copy().iloc[start::]
+
     print(entity.df)
     entity.set_cache(entity.cache, info_label=info_label)
 def SMA(t=None, start=None, end=None, n=None, dataset=pd.DataFrame):
